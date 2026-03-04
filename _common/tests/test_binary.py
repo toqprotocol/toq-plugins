@@ -51,3 +51,63 @@ def test_set_bundled_bin_dir():
     binary.set_bundled_bin_dir(test_path)
     assert binary._bundled_bin_dir == test_path
     binary._bundled_bin_dir = None  # cleanup
+
+
+def test_ensure_extracted_copies_when_target_missing(tmp_path):
+    bundled_dir = tmp_path / "bundled" / "darwin-aarch64"
+    bundled_dir.mkdir(parents=True)
+    bundled_bin = bundled_dir / "toq"
+    bundled_bin.write_text("#!/bin/sh\necho toq 0.1.0")
+    bundled_bin.chmod(0o755)
+
+    target_dir = tmp_path / "bin"
+    target = target_dir / "toq"
+
+    binary.set_bundled_bin_dir(tmp_path / "bundled")
+
+    with patch.object(binary, "BIN_DIR", target_dir), \
+         patch.object(binary, "detect_platform", return_value="darwin-aarch64"):
+        result = binary.ensure_extracted()
+        assert result == target
+        assert target.exists()
+
+    binary._bundled_bin_dir = None
+
+
+def test_ensure_extracted_raises_if_bundled_missing(tmp_path):
+    bundled_dir = tmp_path / "bundled"
+    bundled_dir.mkdir()
+    binary.set_bundled_bin_dir(bundled_dir)
+
+    with patch.object(binary, "BIN_DIR", tmp_path / "bin"), \
+         patch.object(binary, "detect_platform", return_value="darwin-aarch64"):
+        with pytest.raises(FileNotFoundError, match="No bundled toq binary"):
+            binary.ensure_extracted()
+
+    binary._bundled_bin_dir = None
+
+
+def test_ensure_extracted_skips_if_versions_match(tmp_path):
+    import shutil
+
+    bundled_dir = tmp_path / "bundled" / "darwin-aarch64"
+    bundled_dir.mkdir(parents=True)
+    bundled_bin = bundled_dir / "toq"
+    bundled_bin.write_text("fake")
+    bundled_bin.chmod(0o755)
+
+    target_dir = tmp_path / "bin"
+    target_dir.mkdir()
+    target = target_dir / "toq"
+    target.write_text("fake")
+    target.chmod(0o755)
+
+    binary.set_bundled_bin_dir(tmp_path / "bundled")
+
+    with patch.object(binary, "BIN_DIR", target_dir), \
+         patch.object(binary, "detect_platform", return_value="darwin-aarch64"), \
+         patch.object(binary, "_get_version", return_value="toq 0.1.0"):
+        result = binary.ensure_extracted()
+        assert result == target
+
+    binary._bundled_bin_dir = None
