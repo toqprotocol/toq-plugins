@@ -28,7 +28,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install pytest langchain-core httpx
+      - run: pip install pytest langchain-core httpx toq
       - run: pip install -e _common/ --no-deps
       - run: pip install -e langchain/ --no-deps
       - run: pytest langchain/tests/ -v
@@ -40,7 +40,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install pytest crewai httpx
+      - run: pip install pytest crewai httpx toq
       - run: pip install -e _common/ --no-deps
       - run: pip install -e crewai/ --no-deps
       - run: pytest crewai/tests/ -v
