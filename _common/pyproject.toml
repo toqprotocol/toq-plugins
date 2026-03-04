@@ -1,0 +1,14 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "toq-common"
+version = "0.1.0"
+description = "Shared daemon management for toq framework plugins"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+dependencies = ["httpx>=0.28"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["toq_common"]
