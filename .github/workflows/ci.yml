@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  common:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install pytest httpx
+      - run: pip install -e _common/ --no-deps
+      - run: pytest _common/tests/ -v
+
+  langchain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest langchain-core httpx
+      - run: pip install -e _common/ --no-deps
+      - run: pip install -e langchain/ --no-deps
+      - run: pytest langchain/tests/ -v
+
+  crewai:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest crewai httpx
+      - run: pip install -e _common/ --no-deps
+      - run: pip install -e crewai/ --no-deps
+      - run: pytest crewai/tests/ -v
