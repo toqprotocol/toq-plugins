@@ -48,12 +48,41 @@ def test_toq_send():
     client.send.assert_awaited_once()
 
 
+def test_toq_send_stream():
+    client = mock_client()
+    tools = make_tools(client)
+    send = next(t for t in tools if t.name == "toq_send_stream")
+    result = send.run("toq://host/agent", "hi")
+    assert "Streaming sent" in result
+    client.send_streaming.assert_awaited_once()
+
+
 def test_toq_peers_empty():
     client = mock_client()
     tools = make_tools(client)
     peers = next(t for t in tools if t.name == "toq_peers")
     result = peers.run()
     assert result == "No peers"
+
+
+def test_toq_peers_with_data():
+    client = mock_client()
+    client.peers = AsyncMock(return_value=[
+        {"address": "toq://a/one", "status": "connected", "public_key": "key1"},
+    ])
+    tools = make_tools(client)
+    peers = next(t for t in tools if t.name == "toq_peers")
+    result = peers.run()
+    assert "toq://a/one" in result
+    assert "connected" in result
+
+
+def test_toq_status():
+    client = mock_client()
+    tools = make_tools(client)
+    status = next(t for t in tools if t.name == "toq_status")
+    result = status.run()
+    assert "running" in result
 
 
 def test_toq_block():
@@ -65,12 +94,33 @@ def test_toq_block():
     client.block.assert_awaited_once_with("ed25519:abc")
 
 
+def test_toq_unblock():
+    client = mock_client()
+    tools = make_tools(client)
+    unblock = next(t for t in tools if t.name == "toq_unblock")
+    result = unblock.run("ed25519:abc")
+    assert "Unblocked" in result
+    client.unblock.assert_awaited_once_with("ed25519:abc")
+
+
 def test_toq_approvals_empty():
     client = mock_client()
     tools = make_tools(client)
     approvals = next(t for t in tools if t.name == "toq_approvals")
     result = approvals.run()
     assert result == "No pending approvals"
+
+
+def test_toq_approvals_with_data():
+    client = mock_client()
+    client.approvals = AsyncMock(return_value=[
+        {"id": "key1", "address": "toq://a/one"},
+    ])
+    tools = make_tools(client)
+    approvals = next(t for t in tools if t.name == "toq_approvals")
+    result = approvals.run()
+    assert "key1" in result
+    assert "toq://a/one" in result
 
 
 def test_toq_approve():
@@ -80,3 +130,12 @@ def test_toq_approve():
     result = approve.run("key1")
     assert "Approved" in result
     client.approve.assert_awaited_once_with("key1")
+
+
+def test_toq_deny():
+    client = mock_client()
+    tools = make_tools(client)
+    deny = next(t for t in tools if t.name == "toq_deny")
+    result = deny.run("key1")
+    assert "Denied" in result
+    client.deny.assert_awaited_once_with("key1")
