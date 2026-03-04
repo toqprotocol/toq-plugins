@@ -1,6 +1,12 @@
 """Tests for toq_langchain tools."""
 
+import sys
 from unittest.mock import AsyncMock, MagicMock
+
+# TODO: Remove this mock once toq SDK is published to PyPI (roadmap item 9)
+mock_toq = MagicMock()
+mock_toq.AsyncClient = MagicMock
+sys.modules["toq"] = mock_toq
 
 from toq_langchain.tools import make_tools
 
