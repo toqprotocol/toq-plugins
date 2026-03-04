@@ -21,6 +21,18 @@ def test_detect_platform_linux_x86():
         assert binary.detect_platform() == "linux-x86_64"
 
 
+def test_detect_platform_darwin_x86():
+    with patch.object(platform, "system", return_value="Darwin"), \
+         patch.object(platform, "machine", return_value="x86_64"):
+        assert binary.detect_platform() == "darwin-x86_64"
+
+
+def test_detect_platform_linux_aarch64():
+    with patch.object(platform, "system", return_value="Linux"), \
+         patch.object(platform, "machine", return_value="aarch64"):
+        assert binary.detect_platform() == "linux-aarch64"
+
+
 def test_detect_platform_unsupported_os():
     with patch.object(platform, "system", return_value="Windows"), \
          patch.object(platform, "machine", return_value="x86_64"):
@@ -50,6 +62,15 @@ def test_set_bundled_bin_dir():
     test_path = Path("/tmp/test-bin")
     binary.set_bundled_bin_dir(test_path)
     assert binary._bundled_bin_dir == test_path
+    binary._bundled_bin_dir = None  # cleanup
+
+
+def test_bundled_binary_path_returns_correct_after_set():
+    test_path = Path("/tmp/test-bin")
+    binary.set_bundled_bin_dir(test_path)
+    with patch.object(binary, "detect_platform", return_value="darwin-aarch64"):
+        result = binary.bundled_binary_path()
+        assert result == test_path / "darwin-aarch64" / "toq"
     binary._bundled_bin_dir = None  # cleanup
 
 
