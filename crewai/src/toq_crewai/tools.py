@@ -25,14 +25,22 @@ def make_tools(client: AsyncClient) -> list:
 
     @tool("toq_send_stream")
     def toq_send_stream(address: str, message: str) -> str:
-        """Send a streaming message to another toq agent. Returns delivery confirmation.
+        """Send a streaming message to another toq agent. Delivers text
+        word-by-word for real-time display on the receiver's side.
 
         Args:
             address: toq address (e.g. toq://example.com/agent-name)
             message: message text to send
         """
-        resp = asyncio.run(client.send_streaming(address, message))
-        return f"Streaming sent to {address} (status: {resp.get('status', 'unknown')}, thread: {resp.get('thread_id', 'unknown')})"
+        async def _stream():
+            s = await client.stream_start(address)
+            sid = s["stream_id"]
+            for word in message.split():
+                await client.stream_chunk(sid, word + " ")
+            await client.stream_end(sid)
+            return s.get("thread_id", "unknown")
+        tid = asyncio.run(_stream())
+        return f"Streamed to {address} (thread: {tid})"
 
     @tool("toq_peers")
     def toq_peers() -> str:

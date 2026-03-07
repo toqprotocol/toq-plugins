@@ -14,7 +14,9 @@ from toq_crewai.tools import make_tools
 def mock_client():
     client = AsyncMock()
     client.send = AsyncMock(return_value={"status": "delivered", "thread_id": "t1"})
-    client.send_streaming = AsyncMock(return_value={"status": "delivered", "thread_id": "t2"})
+    client.stream_start = AsyncMock(return_value={"stream_id": "s1", "thread_id": "t2"})
+    client.stream_chunk = AsyncMock(return_value={"chunk_id": "c1"})
+    client.stream_end = AsyncMock(return_value={"chunk_id": "e1"})
     client.peers = AsyncMock(return_value=[])
     client.status = AsyncMock(return_value={"status": "running"})
     client.block = AsyncMock()
@@ -53,8 +55,10 @@ def test_toq_send_stream():
     tools = make_tools(client)
     send = next(t for t in tools if t.name == "toq_send_stream")
     result = send.run("toq://host/agent", "hi")
-    assert "Streaming sent" in result
-    client.send_streaming.assert_awaited_once()
+    assert "Streamed" in result
+    client.stream_start.assert_awaited_once()
+    client.stream_chunk.assert_awaited()
+    client.stream_end.assert_awaited_once()
 
 
 def test_toq_peers_empty():
