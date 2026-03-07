@@ -1,14 +1,13 @@
 """CrewAI tools for the toq protocol."""
 
-import asyncio
 import json
 
 from crewai.tools import tool
 
-from toq import AsyncClient
+from toq import Client
 
 
-def make_tools(client: AsyncClient) -> list:
+def make_tools(client: Client) -> list:
     """Create CrewAI tools bound to a toq client."""
 
     @tool("toq_send")
@@ -20,7 +19,7 @@ def make_tools(client: AsyncClient) -> list:
             address: toq address (e.g. toq://example.com/agent-name)
             message: message text to send
         """
-        resp = asyncio.run(client.send(address, message))
+        resp = client.send(address, message)
         return f"Sent to {address} (status: {resp.get('status', 'unknown')}, thread: {resp.get('thread_id', 'unknown')})"
 
     @tool("toq_send_stream")
@@ -32,20 +31,17 @@ def make_tools(client: AsyncClient) -> list:
             address: toq address (e.g. toq://example.com/agent-name)
             message: message text to send
         """
-        async def _stream():
-            s = await client.stream_start(address)
-            sid = s["stream_id"]
-            for word in message.split():
-                await client.stream_chunk(sid, word + " ")
-            await client.stream_end(sid)
-            return s.get("thread_id", "unknown")
-        tid = asyncio.run(_stream())
-        return f"Streamed to {address} (thread: {tid})"
+        s = client.stream_start(address)
+        sid = s["stream_id"]
+        for word in message.split():
+            client.stream_chunk(sid, word + " ")
+        client.stream_end(sid)
+        return f"Streamed to {address} (thread: {s.get('thread_id', 'unknown')})"
 
     @tool("toq_peers")
     def toq_peers() -> str:
         """List all known toq peers with their connection status."""
-        peers = asyncio.run(client.peers())
+        peers = client.peers()
         if not peers:
             return "No peers"
         lines = []
@@ -59,7 +55,7 @@ def make_tools(client: AsyncClient) -> list:
     @tool("toq_status")
     def toq_status() -> str:
         """Check the toq daemon status."""
-        s = asyncio.run(client.status())
+        s = client.status()
         return json.dumps(s)
 
     @tool("toq_block")
@@ -69,7 +65,7 @@ def make_tools(client: AsyncClient) -> list:
         Args:
             public_key: the peer's Ed25519 public key
         """
-        asyncio.run(client.block(public_key))
+        client.block(public_key)
         return f"Blocked {public_key}"
 
     @tool("toq_unblock")
@@ -79,13 +75,13 @@ def make_tools(client: AsyncClient) -> list:
         Args:
             public_key: the peer's Ed25519 public key
         """
-        asyncio.run(client.unblock(public_key))
+        client.unblock(public_key)
         return f"Unblocked {public_key}"
 
     @tool("toq_approvals")
     def toq_approvals() -> str:
         """List pending connection approval requests."""
-        items = asyncio.run(client.approvals())
+        items = client.approvals()
         if not items:
             return "No pending approvals"
         lines = []
@@ -100,7 +96,7 @@ def make_tools(client: AsyncClient) -> list:
         Args:
             approval_id: the approval request ID
         """
-        asyncio.run(client.approve(approval_id))
+        client.approve(approval_id)
         return f"Approved {approval_id}"
 
     @tool("toq_deny")
@@ -110,7 +106,7 @@ def make_tools(client: AsyncClient) -> list:
         Args:
             approval_id: the approval request ID
         """
-        asyncio.run(client.deny(approval_id))
+        client.deny(approval_id)
         return f"Denied {approval_id}"
 
     return [
