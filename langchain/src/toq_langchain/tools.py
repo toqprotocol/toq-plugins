@@ -109,7 +109,37 @@ def make_tools(client: Client) -> list:
         client.deny(approval_id)
         return f"Denied {approval_id}"
 
+    @tool
+    def toq_revoke(approval_id: str) -> str:
+        """Revoke a previously approved agent. Removes from allowed list without blocking.
+
+        Args:
+            approval_id: the encoded public key of the agent to revoke
+        """
+        client.revoke(approval_id)
+        return f"Revoked {approval_id}"
+
+    @tool
+    def toq_history(limit: int = 20, from_addr: str = "") -> str:
+        """Query received message history.
+
+        Args:
+            limit: max messages to return (default 20)
+            from_addr: filter by sender address substring (optional)
+        """
+        msgs = client.history(limit=limit, from_addr=from_addr or None)
+        if not msgs:
+            return "No messages"
+        lines = []
+        for m in msgs:
+            sender = m.get("from", "unknown")
+            text = m.get("body", {}).get("text", "")
+            ts = m.get("timestamp", "")
+            lines.append(f"[{ts}] {sender}: {text}")
+        return "\n".join(lines)
+
     return [
         toq_send, toq_send_stream, toq_peers, toq_status,
         toq_block, toq_unblock, toq_approvals, toq_approve, toq_deny,
+        toq_revoke, toq_history,
     ]
