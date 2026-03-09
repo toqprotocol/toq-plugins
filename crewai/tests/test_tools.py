@@ -24,12 +24,16 @@ def mock_client():
     client.approvals = MagicMock(return_value=[])
     client.approve = MagicMock()
     client.deny = MagicMock()
+    client.revoke = MagicMock()
+    client.history = MagicMock(return_value=[])
+    client.permissions = MagicMock(return_value={"approved": [], "blocked": []})
+    client.ping = MagicMock(return_value={"agent_name": "test", "address": "toq://h/a", "public_key": "k", "reachable": True})
     return client
 
 
-def test_make_tools_returns_9():
+def test_make_tools_returns_13():
     tools = make_tools(mock_client())
-    assert len(tools) == 9
+    assert len(tools) == 13
 
 
 def test_make_tools_names():
@@ -38,6 +42,7 @@ def test_make_tools_names():
     assert names == {
         "toq_send", "toq_send_stream", "toq_peers", "toq_status",
         "toq_block", "toq_unblock", "toq_approvals", "toq_approve", "toq_deny",
+        "toq_revoke", "toq_history", "toq_permissions", "toq_ping",
     }
 
 
@@ -95,7 +100,16 @@ def test_toq_block():
     block = next(t for t in tools if t.name == "toq_block")
     result = block.run("ed25519:abc")
     assert "Blocked" in result
-    client.block.assert_called_once_with("ed25519:abc")
+    client.block.assert_called_once_with(key="ed25519:abc")
+
+
+def test_toq_block_by_address():
+    client = mock_client()
+    tools = make_tools(client)
+    block = next(t for t in tools if t.name == "toq_block")
+    result = block.run("toq://host/*")
+    assert "Blocked" in result
+    client.block.assert_called_once_with(from_addr="toq://host/*")
 
 
 def test_toq_unblock():
@@ -104,7 +118,7 @@ def test_toq_unblock():
     unblock = next(t for t in tools if t.name == "toq_unblock")
     result = unblock.run("ed25519:abc")
     assert "Unblocked" in result
-    client.unblock.assert_called_once_with("ed25519:abc")
+    client.unblock.assert_called_once_with(key="ed25519:abc")
 
 
 def test_toq_approvals_empty():
@@ -131,9 +145,9 @@ def test_toq_approve():
     client = mock_client()
     tools = make_tools(client)
     approve = next(t for t in tools if t.name == "toq_approve")
-    result = approve.run("key1")
+    result = approve.run("toq://host/*")
     assert "Approved" in result
-    client.approve.assert_called_once_with("key1")
+    client.approve.assert_called_once_with(from_addr="toq://host/*")
 
 
 def test_toq_deny():
@@ -143,3 +157,22 @@ def test_toq_deny():
     result = deny.run("key1")
     assert "Denied" in result
     client.deny.assert_called_once_with("key1")
+
+
+def test_toq_permissions():
+    client = mock_client()
+    tools = make_tools(client)
+    perms = next(t for t in tools if t.name == "toq_permissions")
+    result = perms.run()
+    assert "Approved:" in result
+    assert "(none)" in result
+
+
+def test_toq_ping():
+    client = mock_client()
+    tools = make_tools(client)
+    ping = next(t for t in tools if t.name == "toq_ping")
+    result = ping.run("toq://h/a")
+    assert "reachable" in result
+    assert "test" in result
+    client.ping.assert_called_once_with("toq://h/a")

@@ -59,24 +59,30 @@ def make_tools(client: Client) -> list:
         return json.dumps(s)
 
     @tool
-    def toq_block(public_key: str) -> str:
-        """Block a toq peer by their public key.
+    def toq_block(identifier: str) -> str:
+        """Block a toq peer by public key, address, or wildcard pattern.
 
         Args:
-            public_key: the peer's Ed25519 public key
+            identifier: public key, toq address (toq://host/name), or wildcard (toq://host/*, toq://*/name, toq://*)
         """
-        client.block(public_key)
-        return f"Blocked {public_key}"
+        if identifier.startswith("toq://"):
+            client.block(from_addr=identifier)
+        else:
+            client.block(key=identifier)
+        return f"Blocked {identifier}"
 
     @tool
-    def toq_unblock(public_key: str) -> str:
+    def toq_unblock(identifier: str) -> str:
         """Unblock a previously blocked toq peer.
 
         Args:
-            public_key: the peer's Ed25519 public key
+            identifier: public key, toq address, or wildcard pattern
         """
-        client.unblock(public_key)
-        return f"Unblocked {public_key}"
+        if identifier.startswith("toq://"):
+            client.unblock(from_addr=identifier)
+        else:
+            client.unblock(key=identifier)
+        return f"Unblocked {identifier}"
 
     @tool
     def toq_approvals() -> str:
@@ -90,14 +96,20 @@ def make_tools(client: Client) -> list:
         return "\n".join(lines)
 
     @tool
-    def toq_approve(approval_id: str) -> str:
-        """Approve a pending connection request.
+    def toq_approve(identifier: str) -> str:
+        """Approve a pending request by ID, or pre-approve by key/address/wildcard.
 
         Args:
-            approval_id: the approval request ID
+            identifier: pending request ID, public key, toq address, or wildcard pattern
         """
-        client.approve(approval_id)
-        return f"Approved {approval_id}"
+        if identifier.startswith("toq://"):
+            client.approve(from_addr=identifier)
+        elif "/" in identifier or "+" in identifier or "=" in identifier:
+            # Looks like a base64-encoded pending ID
+            client.approve(identifier)
+        else:
+            client.approve(key=identifier)
+        return f"Approved {identifier}"
 
     @tool
     def toq_deny(approval_id: str) -> str:
@@ -110,14 +122,19 @@ def make_tools(client: Client) -> list:
         return f"Denied {approval_id}"
 
     @tool
-    def toq_revoke(approval_id: str) -> str:
-        """Revoke a previously approved agent. Removes from allowed list without blocking.
+    def toq_revoke(identifier: str) -> str:
+        """Revoke a previously approved agent or rule.
 
         Args:
-            approval_id: the encoded public key of the agent to revoke
+            identifier: public key, toq address, wildcard pattern, or pending ID
         """
-        client.revoke(approval_id)
-        return f"Revoked {approval_id}"
+        if identifier.startswith("toq://"):
+            client.revoke(from_addr=identifier)
+        elif "/" in identifier or "+" in identifier or "=" in identifier:
+            client.revoke(identifier)
+        else:
+            client.revoke(key=identifier)
+        return f"Revoked {identifier}"
 
     @tool
     def toq_history(limit: int = 20, from_addr: str = "") -> str:
@@ -138,8 +155,37 @@ def make_tools(client: Client) -> list:
             lines.append(f"[{ts}] {sender}: {text}")
         return "\n".join(lines)
 
+    @tool
+    def toq_permissions() -> str:
+        """List all permission rules (approved and blocked)."""
+        perms = client.permissions()
+        lines = ["Approved:"]
+        for r in perms.get("approved", []):
+            lines.append(f"  {r.get('type', '?')}: {r.get('value', '?')}")
+        if len(lines) == 1:
+            lines.append("  (none)")
+        lines.append("Blocked:")
+        for r in perms.get("blocked", []):
+            lines.append(f"  {r.get('type', '?')}: {r.get('value', '?')}")
+        if lines[-1] == "Blocked:":
+            lines.append("  (none)")
+        return "\n".join(lines)
+
+    @tool
+    def toq_ping(address: str) -> str:
+        """Ping a remote agent to discover its public key.
+
+        Args:
+            address: toq address to ping (e.g. toq://host/name)
+        """
+        result = client.ping(address)
+        key = result.get("public_key", "unknown")
+        reachable = result.get("reachable", False)
+        status = "reachable" if reachable else "unreachable"
+        return f"Agent: {result.get('agent_name', '?')}\nAddress: {address}\nPublic key: {key}\nStatus: {status}"
+
     return [
         toq_send, toq_send_stream, toq_peers, toq_status,
         toq_block, toq_unblock, toq_approvals, toq_approve, toq_deny,
-        toq_revoke, toq_history,
+        toq_revoke, toq_history, toq_permissions, toq_ping,
     ]
