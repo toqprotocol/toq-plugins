@@ -100,13 +100,10 @@ def make_tools(client: Client) -> list:
         """Approve a pending request by ID, or pre-approve by key/address/wildcard.
 
         Args:
-            identifier: pending request ID, public key, toq address, or wildcard pattern
+            identifier: public key, toq address, or wildcard pattern
         """
         if identifier.startswith("toq://"):
             client.approve(from_addr=identifier)
-        elif "/" in identifier or "+" in identifier or "=" in identifier:
-            # Looks like a base64-encoded pending ID
-            client.approve(identifier)
         else:
             client.approve(key=identifier)
         return f"Approved {identifier}"
@@ -126,12 +123,10 @@ def make_tools(client: Client) -> list:
         """Revoke a previously approved agent or rule.
 
         Args:
-            identifier: public key, toq address, wildcard pattern, or pending ID
+            identifier: public key, toq address, or wildcard pattern
         """
         if identifier.startswith("toq://"):
             client.revoke(from_addr=identifier)
-        elif "/" in identifier or "+" in identifier or "=" in identifier:
-            client.revoke(identifier)
         else:
             client.revoke(key=identifier)
         return f"Revoked {identifier}"
