@@ -47,6 +47,7 @@ def test_make_tools_names():
         "toq_send", "toq_send_stream", "toq_peers", "toq_status",
         "toq_block", "toq_unblock", "toq_approvals", "toq_approve", "toq_deny",
         "toq_revoke", "toq_history", "toq_permissions", "toq_ping",
+        "toq_handlers", "toq_add_handler", "toq_remove_handler", "toq_stop_handler",
     }
 
 
