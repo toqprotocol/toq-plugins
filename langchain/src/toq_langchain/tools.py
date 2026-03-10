@@ -179,8 +179,61 @@ def make_tools(client: Client) -> list:
         status = "reachable" if reachable else "unreachable"
         return f"Agent: {result.get('agent_name', '?')}\nAddress: {address}\nPublic key: {key}\nStatus: {status}"
 
+    @tool
+    def toq_handlers() -> str:
+        """List all registered message handlers with their status."""
+        items = client.handlers()
+        if not items:
+            return "No handlers registered"
+        lines = []
+        for h in items:
+            enabled = "enabled" if h.get("enabled") else "disabled"
+            active = h.get("active", 0)
+            lines.append(f"{h.get('name', '?')} - {enabled}, {active} active, command: {h.get('command', '?')}")
+        return "\n".join(lines)
+
+    @tool
+    def toq_add_handler(name: str, command: str, filter_from: str = "", filter_type: str = "") -> str:
+        """Register a new message handler that runs when messages arrive.
+
+        Args:
+            name: unique handler name
+            command: shell command to execute (receives message JSON on stdin)
+            filter_from: optional sender address/wildcard filter (comma-separated for multiple)
+            filter_type: optional message type filter (e.g. message.send)
+        """
+        kwargs: dict = {}
+        if filter_from:
+            kwargs["filter_from"] = [f.strip() for f in filter_from.split(",")]
+        if filter_type:
+            kwargs["filter_type"] = [t.strip() for t in filter_type.split(",")]
+        client.add_handler(name, command, **kwargs)
+        return f"Added handler '{name}'"
+
+    @tool
+    def toq_remove_handler(name: str) -> str:
+        """Remove a registered message handler.
+
+        Args:
+            name: handler name to remove
+        """
+        client.remove_handler(name)
+        return f"Removed handler '{name}'"
+
+    @tool
+    def toq_stop_handler(name: str) -> str:
+        """Stop all running processes for a handler.
+
+        Args:
+            name: handler name
+        """
+        result = client.stop_handler(name)
+        stopped = result.get("stopped", 0)
+        return f"Stopped {stopped} process(es) for '{name}'"
+
     return [
         toq_send, toq_send_stream, toq_peers, toq_status,
         toq_block, toq_unblock, toq_approvals, toq_approve, toq_deny,
         toq_revoke, toq_history, toq_permissions, toq_ping,
+        toq_handlers, toq_add_handler, toq_remove_handler, toq_stop_handler,
     ]

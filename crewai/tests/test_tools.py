@@ -28,12 +28,16 @@ def mock_client():
     client.history = MagicMock(return_value=[])
     client.permissions = MagicMock(return_value={"approved": [], "blocked": []})
     client.ping = MagicMock(return_value={"agent_name": "test", "address": "toq://h/a", "public_key": "k", "reachable": True})
+    client.handlers = MagicMock(return_value=[{"name": "h1", "command": "echo", "enabled": True, "active": 0}])
+    client.add_handler = MagicMock(return_value={"status": "added", "name": "h1"})
+    client.remove_handler = MagicMock(return_value={"status": "removed", "name": "h1"})
+    client.stop_handler = MagicMock(return_value={"stopped": 2, "name": "h1"})
     return client
 
 
-def test_make_tools_returns_13():
+def test_make_tools_returns_17():
     tools = make_tools(mock_client())
-    assert len(tools) == 13
+    assert len(tools) == 17
 
 
 def test_make_tools_names():
@@ -176,3 +180,39 @@ def test_toq_ping():
     assert "reachable" in result
     assert "test" in result
     client.ping.assert_called_once_with("toq://h/a")
+
+
+def test_toq_handlers():
+    client = mock_client()
+    tools = make_tools(client)
+    t = next(t for t in tools if t.name == "toq_handlers")
+    result = t.run()
+    assert "h1" in result
+    client.handlers.assert_called_once()
+
+
+def test_toq_add_handler():
+    client = mock_client()
+    tools = make_tools(client)
+    t = next(t for t in tools if t.name == "toq_add_handler")
+    result = t.run(name="test", command="echo hi", filter_from="toq://host/*")
+    assert "Added" in result
+    client.add_handler.assert_called_once()
+
+
+def test_toq_remove_handler():
+    client = mock_client()
+    tools = make_tools(client)
+    t = next(t for t in tools if t.name == "toq_remove_handler")
+    result = t.run(name="test")
+    assert "Removed" in result
+    client.remove_handler.assert_called_once_with("test")
+
+
+def test_toq_stop_handler():
+    client = mock_client()
+    tools = make_tools(client)
+    t = next(t for t in tools if t.name == "toq_stop_handler")
+    result = t.run(name="test")
+    assert "Stopped" in result
+    client.stop_handler.assert_called_once_with("test")
