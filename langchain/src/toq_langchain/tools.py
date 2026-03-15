@@ -189,7 +189,12 @@ def make_tools(client: Client) -> list:
         for h in items:
             enabled = "enabled" if h.get("enabled") else "disabled"
             active = h.get("active", 0)
-            lines.append(f"{h.get('name', '?')} - {enabled}, {active} active, command: {h.get('command', '?')}")
+            provider = h.get("provider", "")
+            if provider:
+                model = h.get("model", "?")
+                lines.append(f"{h.get('name', '?')} - {enabled}, {active} active, provider: {provider}, model: {model}")
+            else:
+                lines.append(f"{h.get('name', '?')} - {enabled}, {active} active, command: {h.get('command', '?')}")
         return "\n".join(lines)
 
     @tool
