@@ -11,19 +11,19 @@ from toq_common import daemon
 def test_is_running_true():
     with patch("httpx.get") as mock_get:
         mock_get.return_value = MagicMock(status_code=200)
-        assert daemon.is_running(9010) is True
+        assert daemon.is_running(9009) is True
 
 
 def test_is_running_false_on_connect_error():
     import httpx
     with patch("httpx.get", side_effect=httpx.ConnectError("refused")):
-        assert daemon.is_running(9010) is False
+        assert daemon.is_running(9009) is False
 
 
 def test_is_running_false_on_timeout():
     import httpx
     with patch("httpx.get", side_effect=httpx.TimeoutException("timeout")):
-        assert daemon.is_running(9010) is False
+        assert daemon.is_running(9009) is False
 
 
 def test_stop_noop_when_no_managed_process():
@@ -60,7 +60,7 @@ def test_ensure_running_noop_if_running():
 
 def test_atexit_stop_swallows_exceptions():
     with patch.object(daemon, "stop", side_effect=RuntimeError("boom")):
-        daemon._atexit_stop(9010)  # should not raise
+        daemon._atexit_stop(9009)  # should not raise
 
 
 def test_start_raises_if_process_exits_immediately():

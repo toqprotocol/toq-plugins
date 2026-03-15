@@ -33,7 +33,7 @@ def connect(
     agent_name: str | None = None,
     connection_mode: str | None = None,
     adapter: str | None = None,
-    api_port: int | None = None,
+    port: int | None = None,
 ) -> ToqClient:
     """Ensure toq is extracted, configured, and running. Returns a ToqClient."""
     binary.ensure_extracted()
@@ -42,9 +42,10 @@ def connect(
         connection_mode=connection_mode,
         adapter=adapter,
     )
-    port = api_port or daemon.DEFAULT_API_PORT
-    if api_port is None:
-        daemon.ensure_running(api_port=port)
+    auto_start = port is None
+    port = port or daemon.DEFAULT_PORT
+    if auto_start:
+        daemon.ensure_running(port=port)
     return ToqClient(toq.connect_async(f"http://127.0.0.1:{port}"))
 
 

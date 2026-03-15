@@ -11,7 +11,7 @@ from toq_common.binary import TOQ_HOME, binary_path
 
 logger = logging.getLogger("toq_common.daemon")
 
-DEFAULT_API_PORT = 9010
+DEFAULT_PORT = 9009
 HEALTH_TIMEOUT_SECONDS = 10
 HEALTH_POLL_INTERVAL_SECONDS = 0.25
 HEALTH_CHECK_TIMEOUT_SECONDS = 2
@@ -24,24 +24,24 @@ _log_file = None
 _atexit_registered = False
 
 
-def _health_url(api_port: int) -> str:
-    return f"http://127.0.0.1:{api_port}/v1/health"
+def _health_url(port: int) -> str:
+    return f"http://127.0.0.1:{port}/v1/health"
 
 
-def _shutdown_url(api_port: int) -> str:
-    return f"http://127.0.0.1:{api_port}/v1/daemon/shutdown"
+def _shutdown_url(port: int) -> str:
+    return f"http://127.0.0.1:{port}/v1/daemon/shutdown"
 
 
-def is_running(api_port: int = DEFAULT_API_PORT) -> bool:
+def is_running(port: int = DEFAULT_PORT) -> bool:
     """Check if the daemon is responding on the given port."""
     try:
-        resp = httpx.get(_health_url(api_port), timeout=HEALTH_CHECK_TIMEOUT_SECONDS)
+        resp = httpx.get(_health_url(port), timeout=HEALTH_CHECK_TIMEOUT_SECONDS)
         return resp.status_code == 200
     except (httpx.ConnectError, httpx.TimeoutException):
         return False
 
 
-def start(api_port: int = DEFAULT_API_PORT) -> subprocess.Popen:
+def start(port: int = DEFAULT_PORT) -> subprocess.Popen:
     """Start the toq daemon and wait for it to become healthy."""
     global _managed_process, _log_file, _atexit_registered
 
@@ -67,10 +67,10 @@ def start(api_port: int = DEFAULT_API_PORT) -> subprocess.Popen:
             raise RuntimeError(
                 f"toq daemon exited immediately (code {proc.returncode})"
             )
-        if is_running(api_port):
+        if is_running(port):
             _managed_process = proc
             if not _atexit_registered:
-                atexit.register(_atexit_stop, api_port)
+                atexit.register(_atexit_stop, port)
                 _atexit_registered = True
             return proc
         time.sleep(HEALTH_POLL_INTERVAL_SECONDS)
@@ -83,7 +83,7 @@ def start(api_port: int = DEFAULT_API_PORT) -> subprocess.Popen:
     )
 
 
-def stop(api_port: int = DEFAULT_API_PORT) -> None:
+def stop(port: int = DEFAULT_PORT) -> None:
     """Stop the daemon if we started it."""
     global _managed_process, _log_file
 
@@ -92,7 +92,7 @@ def stop(api_port: int = DEFAULT_API_PORT) -> None:
 
     try:
         httpx.post(
-            _shutdown_url(api_port),
+            _shutdown_url(port),
             json={"graceful": True},
             timeout=SHUTDOWN_TIMEOUT_SECONDS,
         )
@@ -114,15 +114,15 @@ def stop(api_port: int = DEFAULT_API_PORT) -> None:
         _log_file = None
 
 
-def ensure_running(api_port: int = DEFAULT_API_PORT) -> None:
+def ensure_running(port: int = DEFAULT_PORT) -> None:
     """Start the daemon if it's not already running."""
-    if not is_running(api_port):
-        start(api_port)
+    if not is_running(port):
+        start(port)
 
 
-def _atexit_stop(api_port: int) -> None:
+def _atexit_stop(port: int) -> None:
     """Registered with atexit to clean up the daemon on exit."""
     try:
-        stop(api_port)
+        stop(port)
     except Exception:
         pass
