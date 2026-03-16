@@ -14,15 +14,15 @@ binary.set_bundled_bin_dir(Path(__file__).parent / "bin")
 class ToqClient:
     """Wraps a toq AsyncClient with CrewAI tools."""
 
-    def __init__(self, async_client: toq.AsyncClient) -> None:
-        self._client = async_client
+    def __init__(self, client: toq.Client) -> None:
+        self._client = client
 
     def tools(self) -> list:
         """Return CrewAI tools bound to this client."""
         return make_tools(self._client)
 
     @property
-    def sdk(self) -> toq.AsyncClient:
+    def sdk(self) -> toq.Client:
         """Access the underlying toq SDK client."""
         return self._client
 
@@ -45,7 +45,7 @@ def connect(
     port = port or daemon.DEFAULT_PORT
     if auto_start:
         daemon.ensure_running(port=port)
-    return ToqClient(toq.connect_async(f"http://127.0.0.1:{port}"))
+    return ToqClient(toq.connect(f"http://127.0.0.1:{port}"))
 
 
 __all__ = ["connect", "listen", "ToqClient"]
