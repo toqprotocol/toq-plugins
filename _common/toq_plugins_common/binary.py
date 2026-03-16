@@ -52,7 +52,7 @@ def bundled_binary_path() -> Path:
     if _bundled_bin_dir is None:
         raise RuntimeError(
             "No bundled binary directory configured. "
-            "Call toq_common.binary.set_bundled_bin_dir() first"
+            "Call toq_plugins_common.binary.set_bundled_bin_dir() first"
         )
     return _bundled_bin_dir / detect_platform() / BINARY_NAME
 

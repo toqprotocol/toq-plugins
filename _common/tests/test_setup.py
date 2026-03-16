@@ -1,9 +1,9 @@
-"""Tests for toq_common.setup module."""
+"""Tests for toq_plugins_common.setup module."""
 
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from toq_common import setup
+from toq_plugins_common import setup
 
 
 def test_is_configured_true(tmp_path):
@@ -29,7 +29,7 @@ def test_ensure_configured_noop_when_configured(tmp_path):
 
 def test_ensure_configured_runs_setup(tmp_path):
     with patch.object(setup, "CONFIG_PATH", tmp_path / "missing.toml"), \
-         patch("toq_common.setup.binary_path", return_value=Path("/usr/bin/toq")), \
+         patch("toq_plugins_common.setup.binary_path", return_value=Path("/usr/bin/toq")), \
          patch("subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(returncode=0)
         setup.ensure_configured(agent_name="bot", connection_mode="open")
@@ -42,7 +42,7 @@ def test_ensure_configured_runs_setup(tmp_path):
 def test_ensure_configured_raises_on_failure(tmp_path):
     import pytest
     with patch.object(setup, "CONFIG_PATH", tmp_path / "missing.toml"), \
-         patch("toq_common.setup.binary_path", return_value=Path("/usr/bin/toq")), \
+         patch("toq_plugins_common.setup.binary_path", return_value=Path("/usr/bin/toq")), \
          patch("subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(returncode=1, stderr="setup failed")
         with pytest.raises(RuntimeError, match="toq setup failed"):
@@ -51,7 +51,7 @@ def test_ensure_configured_raises_on_failure(tmp_path):
 
 def test_ensure_configured_uses_defaults(tmp_path):
     with patch.object(setup, "CONFIG_PATH", tmp_path / "missing.toml"), \
-         patch("toq_common.setup.binary_path", return_value=Path("/usr/bin/toq")), \
+         patch("toq_plugins_common.setup.binary_path", return_value=Path("/usr/bin/toq")), \
          patch("subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(returncode=0)
         setup.ensure_configured()

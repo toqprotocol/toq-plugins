@@ -1,4 +1,4 @@
-"""Tests for toq_common.binary module."""
+"""Tests for toq_plugins_common.binary module."""
 
 import platform
 from pathlib import Path
@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from toq_common import binary
+from toq_plugins_common import binary
 
 
 def test_detect_platform_darwin_arm():

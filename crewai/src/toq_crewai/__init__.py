@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import toq
-from toq_common import binary, daemon, setup
+from toq_plugins_common import binary, daemon, setup
 
 from toq_crewai.listener import listen
 from toq_crewai.tools import make_tools

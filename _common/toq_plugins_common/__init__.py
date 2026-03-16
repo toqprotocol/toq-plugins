@@ -1,8 +1,8 @@
 """Shared daemon management for toq framework plugins."""
 
-from toq_common.binary import ensure_extracted
-from toq_common.daemon import ensure_running, start, stop
-from toq_common.setup import ensure_configured, is_configured
+from toq_plugins_common.binary import ensure_extracted
+from toq_plugins_common.daemon import ensure_running, start, stop
+from toq_plugins_common.setup import ensure_configured, is_configured
 
 __all__ = [
     "ensure_extracted",

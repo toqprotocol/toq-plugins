@@ -7,9 +7,9 @@ import time
 
 import httpx
 
-from toq_common.binary import TOQ_HOME, binary_path
+from toq_plugins_common.binary import TOQ_HOME, binary_path
 
-logger = logging.getLogger("toq_common.daemon")
+logger = logging.getLogger("toq_plugins_common.daemon")
 
 DEFAULT_PORT = 9009
 HEALTH_TIMEOUT_SECONDS = 10

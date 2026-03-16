@@ -3,12 +3,12 @@
 from pathlib import Path
 
 import toq
-from toq_common import binary, daemon, setup
+from toq_plugins_common import binary, daemon, setup
 
 from toq_langchain.listener import listen
 from toq_langchain.tools import make_tools
 
-# Point toq_common at this plugin's bundled binaries.
+# Point toq_plugins_common at this plugin's bundled binaries.
 binary.set_bundled_bin_dir(Path(__file__).parent / "bin")
 
 

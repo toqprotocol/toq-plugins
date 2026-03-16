@@ -1,11 +1,11 @@
-"""Tests for toq_common.daemon module."""
+"""Tests for toq_plugins_common.daemon module."""
 
 import subprocess
 from unittest.mock import patch, MagicMock
 
 import pytest
 
-from toq_common import daemon
+from toq_plugins_common import daemon
 
 
 def test_is_running_true():

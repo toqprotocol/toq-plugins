@@ -2,7 +2,7 @@
 
 import subprocess
 
-from toq_common.binary import TOQ_HOME, binary_path
+from toq_plugins_common.binary import TOQ_HOME, binary_path
 
 CONFIG_PATH = TOQ_HOME / "config.toml"
 
