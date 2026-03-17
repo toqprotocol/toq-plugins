@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "toq-plugins-common"
-version = "0.1.0.dev1"
+version = "0.1.0a1"
 description = "Shared daemon management for toq framework plugins"
 requires-python = ">=3.10"
 license = "Apache-2.0"
